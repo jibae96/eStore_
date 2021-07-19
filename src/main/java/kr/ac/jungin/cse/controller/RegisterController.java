@@ -43,12 +43,10 @@ public class RegisterController {
 	public String registerUserPost(@Valid User user, BindingResult result, Model model) {
 		
 		if(result.hasErrors()) {
-			System.out.println("ㅇㅅㅇ!");
 			return "registerUser";
 		}
 		
 		List<User> userList = userService.getAllUsers();
-		System.out.println(userList.size()+"ㅇㅅㅇ");
 		
 		for(int i=0; i<userList.size(); i++) {
 			if(user.getUsername().equals(userList.get(i).getUsername())) {

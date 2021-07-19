@@ -10,6 +10,10 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, Bootstrap">
     <meta name="generator" content="Hugo 0.83.1">
+    
+    <meta name="_csrf" content="${_csrf.token}"/>
+	<meta name="_csrf_header" content="${_csrf.headerName}"/>
+	
     <title><tiles:insertAttribute name="title"/></title>
 
     <link rel="canonical" href="https://getbootstrap.kr/docs/5.0/examples/carousel/">
@@ -29,6 +33,7 @@
 
 <!--  AngularJS -->
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"> </script>
+
 <script src="<c:url value="/resources/js/bootstrap.bundle.min.js"/>"></script>
     <style>
       .bd-placeholder-img {

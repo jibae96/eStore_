@@ -22,6 +22,7 @@
             		<a class="nav-link" href="<c:url value="/admin"/>">Admin</a>
           		</li>
           	</c:if>
+
           	<c:if test="${pageContext.request.userPrincipal.name != 'admin'}">
           		<li class="nav-item">
             		<a class="nav-link" href="<c:url value="/cart"/>">Cart</a>
@@ -29,11 +30,21 @@
           	</c:if>
           	
           	<li class="nav-item">
+				<a class="nav-link" href="javascript:document.getElementById('logout').submit()">Logout</a>
+			</li>
+					
+			<form id="logout" action="<c:url value="/logout" />"method="post">
+				<input type="hidden" name="${_csrf.parameterName}"value="${_csrf.token}" />
+			</form>
+          	<%--
+          	<li class="nav-item">
           		<a href="javascropt:document.getElementById('logout').submit()" lang="en">Logout</a>
           	</li>
           	<form id="logout" action="<c:url value="/logout"/>" method="post">
           		<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
           	</form>
+          	 --%>
+          	
           </c:if>
           
           <c:if test="${pageContext.request.userPrincipal.name == null}">

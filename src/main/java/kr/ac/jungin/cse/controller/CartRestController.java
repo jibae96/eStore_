@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import kr.ac.jungin.cse.model.Cart;
 import kr.ac.jungin.cse.model.CartItem;
 import kr.ac.jungin.cse.model.Product;
+import kr.ac.jungin.cse.model.User;
 import kr.ac.jungin.cse.service.CartItemService;
 import kr.ac.jungin.cse.service.CartService;
 import kr.ac.jungin.cse.service.ProductService;
+import kr.ac.jungin.cse.service.UserService;
 
 @RestController // @Controller + @ResponseBody
 @RequestMapping("/api/cart")
@@ -29,6 +33,9 @@ public class CartRestController {
 	
 	@Autowired
 	private ProductService productService;
+	
+	@Autowired
+	private UserService userService;
 	
 	@RequestMapping(value="/{cartId}", method=RequestMethod.GET)
 	public ResponseEntity<Cart> getCartById(@PathVariable(value="cartId") int cartId){
@@ -52,7 +59,11 @@ public class CartRestController {
 		
 		Product product = productService.getProductById(productId);
 		
-		Cart cart = cartService.getCartById(1); // temporary
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		
+		User user = userService.getUserByUsername(username);
+		Cart cart = user.getCart();
 		
 		// check if cartitem for a given product already exists
 		List<CartItem> cartItems = cart.getCartItems();
@@ -88,7 +99,12 @@ public class CartRestController {
 	@RequestMapping(value="/cartItem/{productId}", method=RequestMethod.DELETE)
 	public ResponseEntity<Void> removeItem(@PathVariable(value="productId") int productId){
 		
-		Cart cart = cartService.getCartById(1); // temporary
+		//Cart cart = cartService.getCartById(1); // temporary
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		
+		User user = userService.getUserByUsername(username);
+		Cart cart = user.getCart();
 		
 		CartItem cartItem = cartItemService.getCartItemByProductId(cart.getId(), productId);
 		cartItemService.removeCartItem(cartItem);
@@ -96,4 +112,54 @@ public class CartRestController {
 		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
 	}
 	
+	@RequestMapping(value="/cartItem/plus/{productId}", method=RequestMethod.PUT)
+	public ResponseEntity<Void> plusItem(@PathVariable(value="productId") int productId){
+		
+		Product product = productService.getProductById(productId);
+		
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		
+		User user = userService.getUserByUsername(username);
+		Cart cart = user.getCart();
+		
+		CartItem cartItem = cartItemService.getCartItemByProductId(cart.getId(), productId);
+		
+		if(cartItem.getQuantity() < product.getUnitInStock()) {
+			cartItem.setQuantity(cartItem.getQuantity()+1);
+			cartItem.setTotalPrice(product.getPrice()*cartItem.getQuantity());
+			cartItemService.addCartItem(cartItem);
+			
+			return new ResponseEntity<>(HttpStatus.OK);
+		}
+		
+		return new ResponseEntity<Void> (HttpStatus.NO_CONTENT);
+	}
+	
+	@RequestMapping(value="/cartItem/minus/{productId}", method=RequestMethod.PUT)
+	public ResponseEntity<Void> minusItem(@PathVariable(value="productId") int productId){
+		
+		Product product = productService.getProductById(productId);
+		
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		
+		User user = userService.getUserByUsername(username);
+		Cart cart = user.getCart();
+		
+		CartItem cartItem = cartItemService.getCartItemByProductId(cart.getId(), productId);
+		
+		if(cartItem.getQuantity() > 1) {
+			cartItem.setQuantity(cartItem.getQuantity()-1);
+			cartItem.setTotalPrice(product.getPrice()*cartItem.getQuantity());
+			cartItemService.addCartItem(cartItem);
+			
+			return new ResponseEntity<>(HttpStatus.OK);
+		}else if(cartItem.getQuantity()==1) {
+			cartItemService.removeCartItem(cartItem);
+			return new ResponseEntity<>(HttpStatus.OK);
+		}
+		
+		return new ResponseEntity<Void> (HttpStatus.NO_CONTENT);
+	}
 }

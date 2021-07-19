@@ -1,63 +1,101 @@
 var cartApp = angular.module('cartApp', []);
 
-cartApp.controller("cartCtrl", function($scope, $http){
-	
+cartApp.controller("cartCtrl", function($scope, $http) {
+
 	$scope.initCartId = function(cartId) {
 		$scope.cartId = cartId;
 		$scope.refreshCart();
 	};
-	
+
 	$scope.refreshCart = function() {
-		
-		$http.get('/eStore/api/cart/' + $scope.cartId) .then(
-			function successCallback(response){
-				$scope.cart = response.data;
-			});
+
+		$http.get('/eStore/api/cart/' + $scope.cartId).then( // short format
+		function successCallback(response) {
+			$scope.cart = response.data;
+		});
 	};
-	
+
 	$scope.clearCart = function() {
 		
-		$http({
+		$scope.setCsrfToken();
+
+		$http({ // long format
 			method : 'DELETE',
 			url : '/eStore/api/cart/' + $scope.cartId
-		}).then(function successCallback(){
+		}).then(function successCallback() {
 			$scope.refreshCart();
-		}, function errorCallback(response){
+		}, function errorCallback(response) {
 			console.log(response.data);
 		});
+
 	};
-	
-	$scope.addToCart = function(productId){
+
+	$scope.addToCart = function(productId) {
 		
+		$scope.setCsrfToken();
+
 		$http.put('/eStore/api/cart/cartItem/' + productId).then(
-			function successCallback(){
-				alert("Product successfully added to the cart!");
-			}, function errorCallback(){
-				alert("Adding to the cart failed!")
-			});
+				function successCallback() {
+					alert("Product successfully added to the cart!");
+				}, function errorCallback() {
+					alert("Adding to the cart failed!");
+					
+				});
 	};
-	
-	$scope.removeFromCart = function(productId){
+
+	$scope.removeFromCart = function(productId) {
 		
+		$scope.setCsrfToken();
+
 		$http({
 			method : 'DELETE',
-			url : '/eStore/api/cart/cartItem/'+ productId
-		}).then(function successCallback(){
+			url : '/eStore/api/cart/cartItem/' + productId
+		}).then(function successCallback() {
 			$scope.refreshCart();
-		}, function errorCallback(response){
+		}, function errorCallback(response) {
 			console.log(response.data);
 		});
 	};
+
+	$scope.plus = function(productId){
 	
-	$scope.calGrandTotal = function(){
-		var grandTotal = 0;
+		$scope.setCsrfToken();
 		
-		for(var i = 0; i<$scope.cart.cartItems.length; i++){
+		$http.put('/eStore/api/cart/cartItem/plus/'+ productId).then(
+			function successCallback(){
+				$scope.refreshCart();
+			}, function errorCallback(response){
+				console.log(response.data);
+		});
+	};
+	
+	$scope.minus = function(productId){
+	
+		$scope.setCsrfToken();
+		
+		$http.put('/eStore/api/cart/cartItem/minus/'+ productId).then(
+			function successCallback(){
+				$scope.refreshCart();
+			}, function errorCallback(response){
+				console.log(response.data);
+		});
+	};
+	
+	$scope.calGrandTotal = function() {
+		var grandTotal = 0;
+
+		for (var i = 0; i < $scope.cart.cartItems.length; i++) {
 			grandTotal += $scope.cart.cartItems[i].totalPrice;
 		}
-		
+
 		return grandTotal;
 	};
 	
-	
+	$scope.setCsrfToken = function() {
+		var csrfToken = $("meta[name='_csrf']").attr("content");
+		var csrfHeader = $("meta[name='_csrf_header']").attr("content");
+
+		$http.defaults.headers.common[csrfHeader] = csrfToken;
+	}
+
 });
